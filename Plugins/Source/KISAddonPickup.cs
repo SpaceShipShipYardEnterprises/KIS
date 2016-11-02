@@ -32,7 +32,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         EditorPartList.Instance.partListScrollRect.OnBeginDrag(eventData);
       }
     }
-        
+
     public virtual void OnDrag(PointerEventData eventData) {
       // If not KIS dragging then delegate to the editor. KIS dragging is handled in the
       // KISAddonPickup.Update() method.
@@ -41,7 +41,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         EditorPartList.Instance.partListScrollRect.OnDrag(eventData);
       }
     }
-        
+
     public virtual void OnEndDrag(PointerEventData eventData) {
       // If not KIS dragging then delegate to the editor. KIS dragging is handled in the
       // KISAddonPickup.Update() method.
@@ -52,11 +52,11 @@ sealed class KISAddonPickup : MonoBehaviour {
         dragStarted = false;
       }
     }
-        
+
     /// <summary>Registers click handlers on the editor's category icon.</summary>
     void Start() {
       // Getting components is not a cheap operation so, cache anything we can.
-      partIcon = GetComponent<EditorPartIcon>();              
+      partIcon = GetComponent<EditorPartIcon>();
     }
   }
 
@@ -281,8 +281,8 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   public void Update() {
-    // Check if action key is pressed for an EVA kerbal. 
-    if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.isEVA) {
+    // Check if action key is pressed in flight
+    if (HighLogic.LoadedSceneIsFlight) {
       // Check if attach/detach key is pressed
       if (Input.GetKeyDown(attachKey.ToLower())) {
         EnableAttachMode();
@@ -369,7 +369,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       return;
     }
     // Check if pickup module is present on the active vessel.
-    List<ModuleKISPickup> pickupModules = 
+    List<ModuleKISPickup> pickupModules =
       FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
     if (cursorMode != CursorMode.Nothing || !pickupModules.Any()) {
       return;
@@ -487,7 +487,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         || draggedPart == part) {
       return;
     }
-          
+
     ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
 
     // Drag part over another one if possible (ex : mount)
@@ -584,7 +584,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       KISAddonCursor.CursorEnable("KIS/Textures/tooFar", "Too far", "(Move closer to the part)");
       return;
     }
-          
+
     // Check if part is static attached
     if (item) {
       if (item.staticAttached) {
@@ -670,7 +670,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     KISAddonCursor.StopPartDetection();
     KISAddonCursor.CursorDefault();
 
-    // Get actor's pickup module. Not having one is very suspicious but not a blocker. 
+    // Get actor's pickup module. Not having one is very suspicious but not a blocker.
     var pickupModule = FlightGlobals.ActiveVessel.GetComponent<ModuleKISPickup>();
     if (!pickupModule) {
       Logger.logError("Unexpected actor executed KIS action via UI: {0}",
@@ -796,7 +796,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     KISAddonCursor.CursorDisable();
     if (HighLogic.LoadedSceneIsFlight) {
       InputLockManager.SetControlLock(ControlTypes.VESSEL_SWITCHING, "KISpickup");
-      // Disable jetpack mouse control (workaround as SetControlLock didn't have any effect on this)  
+      // Disable jetpack mouse control (workaround as SetControlLock didn't have any effect on this)
       KerbalEVA kEva = FlightGlobals.ActiveVessel.rootPart.GetComponent<KerbalEVA>();
       if (kEva && kEva.JetpackDeployed) {
         kEva.JetpackDeployed = false;
@@ -1005,7 +1005,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     KIS_Shared.DecoupleAssembly(movingPart);
     movingPart.vessel.SetPosition(pos);
     movingPart.vessel.SetRotation(rot);
-          
+
     ModuleKISItem moduleItem = movingPart.GetComponent<ModuleKISItem>();
     bool useExternalPartAttach = false;
     useExternalPartAttach = moduleItem && moduleItem.useExternalPartAttach;
@@ -1049,7 +1049,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     KIS_Shared.SendKISMessage(createdPart, KIS_Shared.MessageAction.AttachEnd,
                               KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
   }
-      
+
   /// <summary>Enables mode that allows re-docking a vessel attached to a station.</summary>
   private void EnableRedockingMode() {
     if (KISAddonPointer.isRunning || cursorMode != CursorMode.Nothing) {
@@ -1130,7 +1130,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       Pickup(redockTarget);
     }
   }
-      
+
   /// <summary>Erases re-docking vessel selection.</summary>
   private void OnMouseRedockExitPart(Part unusedPart) {
     if (cursorMode != CursorMode.ReDock) {
@@ -1144,7 +1144,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
     KISAddonCursor.CursorEnable(GrabIcon, ReDockOkStatus, ReDockSelectVesselText);
   }
-  
+
   /// <summary>Checks if the part and its children can be grabbed and reports the errors.</summary>
   /// <remarks>It must be an existing part, no prefab allowed.
   /// <para>Also, collects <seealso cref="grabbedMass"/> and
@@ -1199,7 +1199,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     if (!part.parent) {
       return true;  // No parent, no detach needed.
     }
-          
+
     var item = part.GetComponent<ModuleKISItem>();
     string rejectText = null;  // If null then detach is allowed.
     if (item) {
@@ -1237,12 +1237,12 @@ sealed class KISAddonPickup : MonoBehaviour {
       ReportCheckError(NeedToolStatus, rejectText, cursorIcon: NeedToolIcon);
       return false;
     }
-          
+
     return true;
   }
 
   /// <summary>Checks if part can be attached. At least in theory.</summary>
-  /// <remarks>This method doesn't say if part *will* be attached if such attempt is made.</remarks>   
+  /// <remarks>This method doesn't say if part *will* be attached if such attempt is made.</remarks>
   private bool CheckIsAttachable(Part part, bool reportToConsole = false) {
     var item = part.GetComponent<ModuleKISItem>();
 
@@ -1332,7 +1332,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
   }
 }
-  
+
 // Create an instance for managing inventory in the editor.
 [KSPAddon(KSPAddon.Startup.EditorAny, false /*once*/)]
 sealed class KISAddonPickupInEditor : MonoBehaviour {
