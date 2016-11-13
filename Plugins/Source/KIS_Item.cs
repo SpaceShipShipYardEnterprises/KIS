@@ -309,9 +309,14 @@ public class KIS_Item {
     inventory.PlaySound(sndPath, loop);
   }
 
+  /// <summary>Add a specified quantity to the stack.</summary>
+  /// <returns><c>true</c>, if 'qty' was added, <c>false</c> otherwise.</returns>
+  /// <param name="qty">quantity to add.</param>
+  /// <param name="checkVolume">If set to <c>true</c> check volume.</param>
+  /// <exception cref="">ArgumentException</exception>
   public bool StackAdd(float qty, bool checkVolume = true) {
     if (qty <= 0) {
-      return false;
+      throw new ArgumentException("'qty' must be > 0, is " + qty);
     }
     float newVolume = inventory.totalVolume + (volume * qty);
     if (checkVolume && newVolume > inventory.maxVolume) {
