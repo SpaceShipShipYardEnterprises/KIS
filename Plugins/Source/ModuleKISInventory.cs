@@ -586,7 +586,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  public KIS_Item AddItem(AvailablePart availablePart, ConfigNode partNode,
+  public virtual KIS_Item AddItem(AvailablePart availablePart, ConfigNode partNode,
                           float qty = 1, int slot = -1) {
     KIS_Item item = null;
     if (items.ContainsKey(slot)) {
@@ -609,7 +609,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return item;
   }
 
-  public KIS_Item AddItem(Part part, float qty = 1, int slot = -1) {
+  public virtual KIS_Item AddItem(Part part, float qty = 1, int slot = -1) {
     KIS_Item item = null;
     if (items.ContainsKey(slot)) {
       slot = -1;
@@ -631,15 +631,22 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return item;
   }
 
+  public virtual void AddItem (KIS_Item item, int slot) {
+    int srcSlot = item.slot;
+    items.Add (slot, item);
+
+    ModuleKISInventory srcInventory = item.inventory;
+    srcInventory.items.Remove (srcSlot);
+    srcInventory.RefreshMassAndVolume ();
+
+    item.inventory = this;
+
+    RefreshMassAndVolume ();
+  }
+
   public static void MoveItem(KIS_Item srcItem, ModuleKISInventory tgtInventory, int tgtSlot) {
-    ModuleKISInventory srcInventory = srcItem.inventory;
-    srcItem.OnMove(srcInventory, tgtInventory);
-    int srcSlot = srcItem.slot;
-    tgtInventory.items.Add(tgtSlot, srcItem);
-    srcItem.inventory.items.Remove(srcSlot);
-    srcItem.inventory = tgtInventory;
-    srcInventory.RefreshMassAndVolume();
-    tgtInventory.RefreshMassAndVolume();
+    srcItem.OnMove(srcItem.inventory, tgtInventory);
+    tgtInventory.AddItem (srcItem, tgtSlot);
   }
 
   public static void MoveItems(Dictionary<int, KIS_Item> srcItems, ModuleKISInventory destInventory) {
@@ -652,13 +659,14 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     srcItems = null;
   }
 
-  public void DeleteItem(int slot) {
+  public virtual bool DeleteItem(int slot) {
     if (items.ContainsKey(slot)) {
-      items[slot].StackRemove();
+      return items[slot].StackRemove();
     }
+    return true;
   }
 
-  public bool isFull() {
+  public virtual bool isFull() {
     return GetFreeSlot() < 0;
   }
 
@@ -681,7 +689,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return -1;
   }
 
-  public float GetContentMass() {
+  public virtual float GetContentMass() {
     float contentMass = 0;
     foreach (KeyValuePair<int, KIS_Item> item in items) {
       contentMass += item.Value.totalMass;
@@ -689,7 +697,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return contentMass;
   }
 
-  public float GetContentVolume() {
+  public virtual float GetContentVolume() {
     float contentVolume = 0;
     foreach (KeyValuePair<int, KIS_Item> item in items) {
       if (item.Value.carriable && invType == InventoryType.Eva) {
@@ -701,7 +709,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return contentVolume;
   }
 
-  public float GetContentCost() {
+  public virtual float GetContentCost() {
     float contentCost = 0;
     foreach (KeyValuePair<int, KIS_Item> item in items) {
       contentCost += item.Value.totalCost;
@@ -743,7 +751,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return true;
   }
 
-  bool VolumeAvailableFor(Part p) {
+  public bool VolumeAvailableFor(Part p) {
     float partVolume = KIS_Shared.GetPartVolume(p.partInfo);
     var newTotalVolume = GetContentVolume() + partVolume;
     if (newTotalVolume > maxVolume) {
@@ -754,7 +762,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return true;
   }
 
-  bool VolumeAvailableFor(KIS_Item item) {
+  public bool VolumeAvailableFor(KIS_Item item) {
     RefreshMassAndVolume();
     if (KISAddonPickup.draggedItem.inventory == this) {
       return true;
@@ -782,12 +790,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
   [KSPEvent(name = "ContextMenuShowInventory", guiActiveEditor = true, active = true,
             guiActive = true, guiActiveUnfocused = true, guiName = "")]
-  public void ShowInventory() {
+  public virtual void ShowInventory() {
     if (showGui) {
-      // Destroy icons viewer
-      foreach (KeyValuePair<int, KIS_Item> item in items) {
-        item.Value.DisableIcon();
-      }
       if (openAnim) {
         openAnim[openAnimName].speed = -openAnimSpeed;
         openAnim.Play(openAnimName);
