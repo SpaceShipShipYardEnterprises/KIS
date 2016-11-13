@@ -324,9 +324,13 @@ public class KIS_Item {
     return true;
   }
 
+  /// <summary>Remove a certain quantity from the Stack</summary>
+  /// <returns><c>true</c>, if there is enough on the the stack , <c>false</c> otherwise.</returns>
+  /// <param name="qty">quantity to remove.</param>
+  /// <exception cref="">ArgumentException</exception> 
   public bool StackRemove(float qty = 1) {
     if (qty <= 0) {
-      return false;
+      throw new ArgumentException("'qty' must be > 0, is " + qty);
     }
     if (quantity - qty <= 0) {
       Delete();
